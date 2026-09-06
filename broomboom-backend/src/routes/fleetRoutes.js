@@ -8,5 +8,11 @@ router.get("/", fleetController.getFleet);
 // GET /api/fleet/:id - Get single vehicle by ID
 router.get("/:id", fleetController.getVehicle);
 
+// POST /api/fleet - Create or update vehicle
+router.post("/", fleetController.saveVehicle);
+
+// DELETE /api/fleet/:id - Delete vehicle
+router.delete("/:id", fleetController.deleteVehicle);
+
 module.exports = router;
 

@@ -19,5 +19,8 @@ router.patch("/:id/status", bookingController.updateBookingStatus);
 router.put("/:id", bookingController.updateBooking);
 router.patch("/:id", bookingController.updateBooking);
 
+// DELETE /api/bookings/:id - Remove booking
+router.delete("/:id", bookingController.deleteBooking);
+
 module.exports = router;
 

@@ -1,4 +1,27 @@
+require("../config/env");
 const axios = require("axios");
+
+const formatCashfreePhone = (rawPhone) => {
+  if (!rawPhone) return "9876543210";
+  let cleaned = String(rawPhone).replace(/\D/g, "");
+  if (cleaned.length > 10 && cleaned.startsWith("91")) {
+    cleaned = cleaned.slice(2);
+  }
+  if (cleaned.length > 10) {
+    cleaned = cleaned.slice(-10);
+  }
+  if (!cleaned || cleaned.length < 10) {
+    return "9876543210";
+  }
+  return cleaned;
+};
+
+const formatCashfreeEmail = (rawEmail) => {
+  if (!rawEmail || typeof rawEmail !== "string") return "customer@broomboom.com";
+  const trimmed = rawEmail.trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(trimmed) ? trimmed : "customer@broomboom.com";
+};
 
 const createCashfreeOrder = async ({
   orderId,
@@ -22,12 +45,13 @@ const createCashfreeOrder = async ({
   }
 
   // Validate inputs
-  if (!orderId || !amount || amount <= 0) {
+  if (!orderId || !amount || Number(amount) <= 0) {
     throw new Error('Invalid order ID or amount');
   }
-  if (!customerId || !customerName || !customerPhone || !customerEmail) {
-    throw new Error('Missing customer details');
-  }
+
+  const sanitizedPhone = formatCashfreePhone(customerPhone);
+  const sanitizedEmail = formatCashfreeEmail(customerEmail);
+  const sanitizedName = (customerName && String(customerName).trim()) || "Guest Passenger";
 
   const isProduction = process.env.CASHFREE_ENV === "production";
   const baseURL = isProduction
@@ -45,10 +69,10 @@ const createCashfreeOrder = async ({
         order_amount: Number(amount),
         order_currency: "INR",
         customer_details: {
-          customer_id: String(customerId),
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          customer_email: customerEmail,
+          customer_id: String(customerId || orderId).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 50),
+          customer_name: sanitizedName,
+          customer_phone: sanitizedPhone,
+          customer_email: sanitizedEmail,
         },
         order_meta: {
           return_url: returnUrl,
@@ -59,7 +83,7 @@ const createCashfreeOrder = async ({
         headers: {
           "x-client-id": process.env.CASHFREE_APP_ID,
           "x-client-secret": process.env.CASHFREE_SECRET_KEY,
-          "x-api-version": process.env.CASHFREE_API_VERSION || "2025-01-01",
+          "x-api-version": process.env.CASHFREE_API_VERSION || "2023-08-01",
           "Content-Type": "application/json",
         },
         timeout: 10000, // 10 seconds
@@ -68,14 +92,15 @@ const createCashfreeOrder = async ({
 
     return response.data;
   } catch (error) {
-    // Log error (avoid logging sensitive data)
-    console.error('Cashfree order creation failed:', error.message);
-    if (error.response) {
-      // Cashfree returned an error response
-      console.error('Cashfree error data:', error.response.data);
+    // Extract informative error detail from Cashfree API
+    const responseData = error.response?.data;
+    const detailMsg = responseData?.message || error.message;
+    console.error('Cashfree order creation failed:', detailMsg);
+    if (responseData) {
+      console.error('Cashfree error data:', responseData);
     }
-    // Re-throw a more friendly error
-    throw new Error(`Failed to create Cashfree order: ${error.message}`);
+    // Re-throw a friendly and descriptive error
+    throw new Error(`Failed to create Cashfree order: ${detailMsg}`);
   }
 };
 
