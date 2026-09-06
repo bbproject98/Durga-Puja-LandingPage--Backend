@@ -1,0 +1,117 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Leads Table (Captures user details from Login / Early Bird popup)
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  context   String?  // e.g. "Rental Package: South Kolkata Mega Theme" or "Outstation: Digha"
+  action    String?  // "book" | "explore"
+  status    String   @default("NEW") // "NEW" | "CONTACTED" | "CONVERTED"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 2. Fleet Table (Vehicles available for booking)
+model Fleet {
+  id              String   @id // e.g. "sedan_4", "suv_6", "suv_7", "traveller_13", etc.
+  name            String
+  models          String
+  seats           Int
+  luggage         String
+  category        String   // "sedan" | "suv" | "traveller"
+  tag             String
+  badgeType       String   @default("gold") // "gold" | "crimson"
+  image           String
+  basePrice       Int
+  baseHours       Int
+  baseKm          Int
+  nightPrice      Int
+  perExtraHour    Int
+  outstationPerKm Int
+  features        String   // JSON string of features array
+  inclusions      String   // JSON string of inclusions array
+  exclusions      String   // JSON string of exclusions array
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// 3. Packages & Outstation Routes Table
+model Package {
+  id            String   @id // e.g. "south-kolkata-mega", "kolkata-digha"
+  type          String   // "rental" | "outstation"
+  title         String
+  subtitle      String?
+  hoursKm       String?  // e.g. "8 Hours / 80 KMs"
+  rentalType    String?  // e.g. "Evening Rentals"
+  distance      String?  // e.g. "185 KM"
+  estimatedTime String?  // e.g. "4.5 Hours"
+  priceStarting Int      @default(2499)
+  badge         String
+  optimalTime   String?
+  highlights    String   // JSON string of highlights array
+  image         String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 4. Confirmed Bookings Table
+model Booking {
+  id             String   @id @default(cuid())
+  bookingId      String   @unique // e.g. "BBC-PUJA-849201"
+
+  // Customer details
+  customerName   String
+  customerPhone  String
+  customerEmail  String
+
+  // Vehicle details
+  vehicleName    String
+  vehicleModels  String
+  vehicleSeats   Int
+
+  // Package / route
+  packageTitle   String
+
+  // Schedule
+  travelDate     String   // e.g. "Oct 16 (Maha Saptami)"
+  pickupTime     String   // e.g. "04:00 PM"
+  returnDate     String?  // optional
+  returnTime     String?  // optional
+
+  // Pickup location
+  pickupAddress  String
+  pickupPincode  String?
+  pickupState    String?
+
+  // ---- NEW BREAKDOWN FIELDS ----
+  fare           Int      @default(0) // Full ride cost
+  advanceAmount  Int      @default(0) // 25% of fare
+  gstAmount      Int      @default(0) // 5% of advanceAmount
+  gatewayCharge  Int      @default(0) // 3% on (advanceAmount + gstAmount)
+  finalPayable   Int      @default(0) // Total paid online
+  balanceDue     Int      @default(0) // fare - advanceAmount
+
+  // ---- LEGACY FIELDS (optional) ----
+  totalTariff    Int      @default(0)
+  advancePaid    Int      @default(0)
+  balancePayable Int      @default(0) 
+
+  // Payment & status tracking
+  status         String   // "PAYMENT_PENDING" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
+  paymentStatus  String   // "PENDING" | "PAID" | "FAILED"
+  cashfreeOrderId String? @unique
+
+  // Timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
