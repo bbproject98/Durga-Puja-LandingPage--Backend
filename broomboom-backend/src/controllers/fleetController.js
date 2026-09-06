@@ -33,8 +33,43 @@ const getVehicle = async (req, res, next) => {
   }
 };
 
+const saveVehicle = async (req, res, next) => {
+  try {
+    const saved = await fleetService.saveVehicle(req.body);
+    return res.status(200).json({
+      success: true,
+      message: "Vehicle saved successfully.",
+      data: saved,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteVehicle = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deleted = await fleetService.deleteVehicle(id);
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: `Vehicle with id '${id}' not found.`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Vehicle deleted successfully.",
+      data: deleted,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getFleet,
   getVehicle,
+  saveVehicle,
+  deleteVehicle,
 };
 

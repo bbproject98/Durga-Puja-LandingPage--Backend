@@ -33,8 +33,43 @@ const getPackage = async (req, res, next) => {
   }
 };
 
+const savePackage = async (req, res, next) => {
+  try {
+    const saved = await packageService.savePackage(req.body);
+    return res.status(200).json({
+      success: true,
+      message: "Package saved successfully.",
+      data: saved,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deletePackage = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deleted = await packageService.deletePackage(id);
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: `Package with id '${id}' not found.`,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Package deleted successfully.",
+      data: deleted,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getPackages,
   getPackage,
+  savePackage,
+  deletePackage,
 };
 

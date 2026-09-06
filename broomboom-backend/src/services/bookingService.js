@@ -1,3 +1,4 @@
+require("../config/env");
 const prisma = require("../config/db");
 const paymentService = require("./paymentService");
 
@@ -30,90 +31,119 @@ const createBooking = async (data) => {
 
   const bookingId = data.bookingId || generateBookingId();
 
-  const fare = totalTariff;
+  const fare = Number(totalTariff || data.fare) || 0;
   const advanceAmount = Math.round(fare * 0.25);
-  const withGst = advanceAmount * 1.05;
-  const withGateway = withGst * 1.03;
-  const finalPayable = Math.ceil(withGateway);
   const gstAmount = Math.round(advanceAmount * 0.05);
+  const withGst = advanceAmount + gstAmount;
   const gatewayCharge = Math.ceil(withGst * 0.03);
-  const balanceDue = fare - advanceAmount;
+  const finalPayable = withGst + gatewayCharge;
+  const balanceDue = Math.max(0, fare - advanceAmount);
 
-  const booking = await prisma.booking.create({
-    data: {
-      bookingId,
-      customerName: (customerName || "").trim(),
-      customerPhone: (customerPhone || "").trim(),
-      customerEmail: (customerEmail || "").trim().toLowerCase(),
-      vehicleName: vehicleName || "Assigned Chauffeur Cab",
-      vehicleModels: vehicleModels || "Standard AC Chauffeur Fleet",
-      vehicleSeats,
-      packageTitle: packageTitle || "Durga Puja Festive Tour",
-      travelDate: travelDate || "Oct 16 (Maha Saptami)",
-      pickupTime: pickupTime || "04:00 PM",
-      returnDate: returnDate || "Oct 16 (Same Night)",
-      returnTime: returnTime || "11:30 PM",
-      pickupAddress: (pickupAddress || "").trim(),
-      pickupPincode: pickupPincode ? pickupPincode.trim() : null,
-      pickupState: pickupState ? pickupState.trim() : null,
-      fare,
-      advanceAmount,
-      gstAmount,
-      gatewayCharge,
-      finalPayable,
-      balanceDue,
-      totalTariff: fare,
-      advancePaid: advanceAmount,
-      balancePayable: balanceDue,
-      status: "PAYMENT_PENDING",
-      paymentStatus: "PENDING",
-    },
-  });
+  const sanitizedName = (customerName || "").trim() || "Guest Passenger";
+  const sanitizedPhone = (customerPhone || "").trim();
+  const sanitizedEmail = (customerEmail || "").trim().toLowerCase() || "customer@broomboom.com";
 
-  const cashfreeOrderId = `CF_${booking.bookingId}`;
-  const cashfreeOrder = await paymentService.createCashfreeOrder({
-    orderId: cashfreeOrderId,
-    amount: finalPayable,
-    customerId: booking.id,
-    customerName: booking.customerName,
-    customerPhone: booking.customerPhone,
-    customerEmail: booking.customerEmail,
-  });
+  let booking = null;
+  try {
+    booking = await prisma.booking.create({
+      data: {
+        bookingId,
+        customerName: sanitizedName,
+        customerPhone: sanitizedPhone,
+        customerEmail: sanitizedEmail,
+        vehicleName: vehicleName || "Assigned Chauffeur Cab",
+        vehicleModels: vehicleModels || "Standard AC Chauffeur Fleet",
+        vehicleSeats,
+        packageTitle: packageTitle || "Durga Puja Festive Tour",
+        travelDate: travelDate || "Oct 16 (Maha Saptami)",
+        pickupTime: pickupTime || "04:00 PM",
+        returnDate: returnDate || "Oct 16 (Same Night)",
+        returnTime: returnTime || "11:30 PM",
+        pickupAddress: (pickupAddress || "").trim(),
+        pickupPincode: pickupPincode ? pickupPincode.trim() : null,
+        pickupState: pickupState ? pickupState.trim() : null,
+        fare,
+        advanceAmount,
+        gstAmount,
+        gatewayCharge,
+        finalPayable,
+        balanceDue,
+        totalTariff: fare,
+        advancePaid: advanceAmount,
+        balancePayable: balanceDue,
+        status: data.status || "PAYMENT_PENDING",
+        paymentStatus: data.paymentStatus || "PENDING",
+      },
+    });
 
-  const updatedBooking = await prisma.booking.update({
-    where: { id: booking.id },
-    data: { cashfreeOrderId: cashfreeOrder.order_id },
-  });
+    const cashfreeOrderId = `CF_${booking.bookingId}`;
+    const cashfreeOrder = await paymentService.createCashfreeOrder({
+      orderId: cashfreeOrderId,
+      amount: finalPayable,
+      customerId: booking.id,
+      customerName: booking.customerName,
+      customerPhone: booking.customerPhone,
+      customerEmail: booking.customerEmail,
+    });
 
-  return {
-    booking: updatedBooking,
-    paymentSessionId: cashfreeOrder.payment_session_id,
-  };
+    const updatedBooking = await prisma.booking.update({
+      where: { id: booking.id },
+      data: { cashfreeOrderId: cashfreeOrder.order_id },
+    });
+
+    return {
+      booking: updatedBooking,
+      paymentSessionId: cashfreeOrder.payment_session_id,
+    };
+  } catch (error) {
+    // If Cashfree order initialization fails, clean up the pending record so retries do not collide on unique constraints
+    if (booking && !booking.cashfreeOrderId) {
+      await prisma.booking.delete({ where: { id: booking.id } }).catch(() => {});
+    }
+    throw error;
+  }
 };
 
 const getBookingByRefId = async (id) => {
   if (!id) return null;
+  const cleanId = String(id).trim();
+  const withoutCF = cleanId.startsWith("CF_") ? cleanId.slice(3) : cleanId;
+  const withCF = cleanId.startsWith("CF_") ? cleanId : `CF_${cleanId}`;
+
   let booking = await prisma.booking.findFirst({
     where: {
       OR: [
-        { bookingId: id },
-        { cashfreeOrderId: id },
-        { id: id },
+        { bookingId: cleanId },
+        { bookingId: withoutCF },
+        { cashfreeOrderId: cleanId },
+        { cashfreeOrderId: withCF },
+        { id: cleanId },
       ],
     },
   });
   if (!booking) return null;
+
   if (booking.paymentStatus !== "PAID" && booking.cashfreeOrderId) {
     try {
       const cashfreeStatus = await paymentService.getCashfreeOrderStatus(booking.cashfreeOrderId);
-      if (cashfreeStatus && (cashfreeStatus.order_status === "PAID" || cashfreeStatus.orderStatus === "PAID")) {
-        booking = await prisma.booking.update({
-          where: { id: booking.id },
-          data: {
-            paymentStatus: "PAID",
-            status: "CONFIRMED",
-          },
-        });
+      if (cashfreeStatus) {
+        const orderStatus = cashfreeStatus.order_status || cashfreeStatus.orderStatus;
+        if (orderStatus === "PAID") {
+          booking = await prisma.booking.update({
+            where: { id: booking.id },
+            data: {
+              paymentStatus: "PAID",
+              status: "CONFIRMED",
+            },
+          });
+        } else if (orderStatus === "FAILED" || orderStatus === "CANCELLED") {
+          booking = await prisma.booking.update({
+            where: { id: booking.id },
+            data: {
+              paymentStatus: "FAILED",
+            },
+          });
+        }
       }
     } catch (err) {
       console.warn("Could not verify status with Cashfree:", err.message);
@@ -130,9 +160,10 @@ const getAllBookings = async () => {
 
 const updateBookingStatus = async (id, status) => {
   if (!id || !status) return null;
+  const cleanId = String(id).trim();
   const existing = await prisma.booking.findFirst({
     where: {
-      OR: [{ id: id }, { bookingId: id }],
+      OR: [{ id: cleanId }, { bookingId: cleanId }, { cashfreeOrderId: cleanId }],
     },
   });
   if (!existing) return null;
@@ -145,9 +176,10 @@ const updateBookingStatus = async (id, status) => {
 
 const updateBooking = async (id, data) => {
   if (!id) return null;
+  const cleanId = String(id).trim();
   const existing = await prisma.booking.findFirst({
     where: {
-      OR: [{ id: id }, { bookingId: id }],
+      OR: [{ id: cleanId }, { bookingId: cleanId }, { cashfreeOrderId: cleanId }],
     },
   });
   if (!existing) return null;
@@ -169,18 +201,35 @@ const updateBooking = async (id, data) => {
   if (data.pickupAddress !== undefined) updateData.pickupAddress = data.pickupAddress;
   if (data.pickupPincode !== undefined) updateData.pickupPincode = data.pickupPincode;
   if (data.pickupState !== undefined) updateData.pickupState = data.pickupState;
+  if (data.cashfreeOrderId !== undefined) updateData.cashfreeOrderId = data.cashfreeOrderId;
 
-  if (data.totalTariff !== undefined) {
-    updateData.totalTariff = Number(data.totalTariff);
-    updateData.fare = Number(data.totalTariff);
+  // Handle all financial breakdown fields cleanly
+  const fare = data.fare !== undefined ? Number(data.fare) : (data.totalTariff !== undefined ? Number(data.totalTariff) : undefined);
+  if (fare !== undefined) {
+    updateData.fare = fare;
+    updateData.totalTariff = fare;
   }
-  if (data.advancePaid !== undefined) {
-    updateData.advancePaid = Number(data.advancePaid);
-    updateData.advanceAmount = Number(data.advancePaid);
+
+  const advance = data.advanceAmount !== undefined ? Number(data.advanceAmount) : (data.advancePaid !== undefined ? Number(data.advancePaid) : undefined);
+  if (advance !== undefined) {
+    updateData.advanceAmount = advance;
+    updateData.advancePaid = advance;
   }
-  if (data.balancePayable !== undefined) {
-    updateData.balancePayable = Number(data.balancePayable);
-    updateData.balanceDue = Number(data.balancePayable);
+
+  if (data.gstAmount !== undefined) {
+    updateData.gstAmount = Number(data.gstAmount);
+  }
+  if (data.gatewayCharge !== undefined) {
+    updateData.gatewayCharge = Number(data.gatewayCharge);
+  }
+  if (data.finalPayable !== undefined) {
+    updateData.finalPayable = Number(data.finalPayable);
+  }
+
+  const balance = data.balanceDue !== undefined ? Number(data.balanceDue) : (data.balancePayable !== undefined ? Number(data.balancePayable) : undefined);
+  if (balance !== undefined) {
+    updateData.balanceDue = balance;
+    updateData.balancePayable = balance;
   }
 
   return await prisma.booking.update({
@@ -189,11 +238,26 @@ const updateBooking = async (id, data) => {
   });
 };
 
-// ✅ CORRECT EXPORT – ensure these names match
+const deleteBooking = async (id) => {
+  if (!id) return null;
+  const cleanId = String(id).trim();
+  const existing = await prisma.booking.findFirst({
+    where: {
+      OR: [{ id: cleanId }, { bookingId: cleanId }, { cashfreeOrderId: cleanId }],
+    },
+  });
+  if (!existing) return null;
+
+  return await prisma.booking.delete({
+    where: { id: existing.id },
+  });
+};
+
 module.exports = {
   createBooking,
   getBookingByRefId,
   getAllBookings,
   updateBookingStatus,
   updateBooking,
+  deleteBooking,
 };

@@ -30,8 +30,46 @@ const getVehicleById = async (id) => {
   };
 };
 
+const saveVehicle = async (data) => {
+  const id = data.id || `veh_${Date.now()}`;
+  const payload = {
+    name: data.name,
+    models: data.models,
+    seats: Number(data.seats) || 4,
+    luggage: data.luggage || "2 Bags",
+    category: data.category || "sedan",
+    tag: data.tag || "",
+    badgeType: data.badgeType || "gold",
+    image: data.image || "",
+    basePrice: Number(data.basePrice) || 0,
+    baseHours: Number(data.baseHours) || 8,
+    baseKm: Number(data.baseKm) || 80,
+    nightPrice: Number(data.nightPrice) || 0,
+    perExtraHour: Number(data.perExtraHour) || 0,
+    outstationPerKm: Number(data.outstationPerKm) || 0,
+    features: typeof data.features === "object" ? JSON.stringify(data.features) : (data.features || "[]"),
+    inclusions: typeof data.inclusions === "object" ? JSON.stringify(data.inclusions) : (data.inclusions || "[]"),
+    exclusions: typeof data.exclusions === "object" ? JSON.stringify(data.exclusions) : (data.exclusions || "[]"),
+  };
+
+  return await prisma.fleet.upsert({
+    where: { id },
+    update: payload,
+    create: { id, ...payload },
+  });
+};
+
+const deleteVehicle = async (id) => {
+  if (!id) return null;
+  return await prisma.fleet.delete({
+    where: { id },
+  });
+};
+
 module.exports = {
   getAllFleet,
   getVehicleById,
+  saveVehicle,
+  deleteVehicle,
 };
 

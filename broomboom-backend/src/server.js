@@ -10,6 +10,7 @@ const leadRoutes = require("./routes/leadRoutes");
 const fleetRoutes = require("./routes/fleetRoutes");
 const packageRoutes = require("./routes/packageRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
 
@@ -178,6 +179,7 @@ app.use("/api/leads", leadRoutes);
 app.use("/api/fleet", fleetRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // 5. 404 Handler for undefined routes
 app.use((req, res) => {
