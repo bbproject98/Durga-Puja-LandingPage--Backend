@@ -17,16 +17,7 @@ const app = express();
 // 1. Global Middlewares
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:9000",
-      "http://localhost:9001",
-      "http://127.0.0.1:3000",
-      "http://127.0.0.1:9000",
-      "http://127.0.0.1:9001",
-      config.frontendUrl,
-    ],
+    origin: ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", config.frontendUrl],
     credentials: true,
   })
 );
