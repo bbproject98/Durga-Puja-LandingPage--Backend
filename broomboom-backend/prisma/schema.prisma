@@ -12,7 +12,7 @@ model Lead {
   id        String   @id @default(cuid())
   name      String
   phone     String
-  email     String
+  email     String?
   context   String?  // e.g. "Rental Package: South Kolkata Mega Theme" or "Outstation: Digha"
   action    String?  // "book" | "explore"
   status    String   @default("NEW") // "NEW" | "CONTACTED" | "CONVERTED"
@@ -71,7 +71,7 @@ model Booking {
   // Customer details
   customerName   String
   customerPhone  String
-  customerEmail  String
+  customerEmail  String?
 
   // Vehicle details
   vehicleName    String
