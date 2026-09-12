@@ -1,5 +1,6 @@
-﻿const prisma = require("../config/db");
+const prisma = require("../config/db");
 const paymentService = require("../services/paymentService");
+const { promoteCustomerLeadsToLoyal } = require("../services/leadService");
 
 const handleCashfreeWebhook = async (req, res, next) => {
   try {
@@ -41,6 +42,7 @@ const handleCashfreeWebhook = async (req, res, next) => {
               status: "CONFIRMED",
             },
           });
+          await promoteCustomerLeadsToLoyal(booking.customerPhone);
           console.log(`✅ Booking ${booking.bookingId} marked as PAID via webhook`);
         } else if (orderStatus === "FAILED" || orderStatus === "USER_DROPPED") {
           await prisma.booking.update({
@@ -95,6 +97,7 @@ const verifyPaymentStatus = async (req, res, next) => {
             status: "CONFIRMED",
           },
         });
+        await promoteCustomerLeadsToLoyal(booking.customerPhone);
       } else if (orderStatus === "FAILED" || orderStatus === "CANCELLED") {
         booking = await prisma.booking.update({
           where: { id: booking.id },

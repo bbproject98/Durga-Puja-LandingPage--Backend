@@ -8,16 +8,25 @@ const validateLeadInput = (req, res, next) => {
   if (cleanPhone.length < 10) {
     return res.status(400).json({ success: false, message: "Valid 10-digit Phone Number is required." });
   }
-  if (!email || typeof email !== "string" || !email.includes("@")) {
-    return res.status(400).json({ success: false, message: "Valid Email Address is required." });
+  const trimmedEmail = typeof email === "string" ? email.trim() : null;
+  if (trimmedEmail && trimmedEmail.toLowerCase() !== "null" && trimmedEmail.toLowerCase() !== "undefined") {
+    if (!trimmedEmail.includes("@")) {
+      return res.status(400).json({ success: false, message: "Valid Email Address is required if provided." });
+    }
   }
   next();
 };
 
 const validateBookingInput = (req, res, next) => {
   const { customerName, customerPhone, customerEmail, vehicleName, pickupAddress, totalTariff, fare } = req.body;
-  if (!customerName || !customerPhone || !customerEmail) {
-    return res.status(400).json({ success: false, message: "Passenger contact details are required." });
+  if (!customerName || !customerPhone) {
+    return res.status(400).json({ success: false, message: "Passenger contact details (name and phone) are required." });
+  }
+  const trimmedCustomerEmail = typeof customerEmail === "string" ? customerEmail.trim() : null;
+  if (trimmedCustomerEmail && trimmedCustomerEmail.toLowerCase() !== "null" && trimmedCustomerEmail.toLowerCase() !== "undefined") {
+    if (!trimmedCustomerEmail.includes("@")) {
+      return res.status(400).json({ success: false, message: "Valid Email Address is required if provided." });
+    }
   }
   const cleanPhone = String(customerPhone || "").replace(/\D/g, "");
   if (cleanPhone.length < 10) {

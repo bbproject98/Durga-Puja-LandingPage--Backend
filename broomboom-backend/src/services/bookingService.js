@@ -1,6 +1,7 @@
 require("../config/env");
 const prisma = require("../config/db");
 const paymentService = require("./paymentService");
+const { promoteCustomerLeadsToLoyal } = require("./leadService");
 
 const generateBookingId = () => {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
@@ -41,7 +42,21 @@ const createBooking = async (data) => {
 
   const sanitizedName = (customerName || "").trim() || "Guest Passenger";
   const sanitizedPhone = (customerPhone || "").trim();
-  const sanitizedEmail = (customerEmail || "").trim().toLowerCase() || "customer@broomboom.com";
+  
+  let cleanCustomerEmail = null;
+  if (customerEmail && typeof customerEmail === "string") {
+    const trimmed = customerEmail.trim().toLowerCase();
+    if (trimmed && trimmed !== "null" && trimmed !== "undefined") {
+      cleanCustomerEmail = trimmed;
+    }
+  }
+
+  const isPayLater =
+    data.payMode === "cod" ||
+    data.payMode === "pay_later" ||
+    data.isPayLater === true ||
+    data.paymentStatus === "PAY_LATER" ||
+    data.status === "PAY_LATER";
 
   let booking = null;
   try {
@@ -50,7 +65,7 @@ const createBooking = async (data) => {
         bookingId,
         customerName: sanitizedName,
         customerPhone: sanitizedPhone,
-        customerEmail: sanitizedEmail,
+        customerEmail: cleanCustomerEmail,
         vehicleName: vehicleName || "Assigned Chauffeur Cab",
         vehicleModels: vehicleModels || "Standard AC Chauffeur Fleet",
         vehicleSeats,
@@ -71,10 +86,18 @@ const createBooking = async (data) => {
         totalTariff: fare,
         advancePaid: advanceAmount,
         balancePayable: balanceDue,
-        status: data.status || "PAYMENT_PENDING",
-        paymentStatus: data.paymentStatus || "PENDING",
+        status: isPayLater ? (data.status || "CONFIRMED") : (data.status || "PAYMENT_PENDING"),
+        paymentStatus: isPayLater ? (data.paymentStatus || "PENDING") : (data.paymentStatus || "PENDING"),
       },
     });
+
+    if (isPayLater) {
+      await promoteCustomerLeadsToLoyal(booking.customerPhone);
+      return {
+        booking,
+        paymentSessionId: null,
+      };
+    }
 
     const cashfreeOrderId = `CF_${booking.bookingId}`;
     const cashfreeOrder = await paymentService.createCashfreeOrder({
@@ -83,7 +106,7 @@ const createBooking = async (data) => {
       customerId: booking.id,
       customerName: booking.customerName,
       customerPhone: booking.customerPhone,
-      customerEmail: booking.customerEmail,
+      customerEmail: cleanCustomerEmail || "customer@broomboom.com",
     });
 
     const updatedBooking = await prisma.booking.update({
@@ -136,6 +159,7 @@ const getBookingByRefId = async (id) => {
               status: "CONFIRMED",
             },
           });
+          await promoteCustomerLeadsToLoyal(booking.customerPhone);
         } else if (orderStatus === "FAILED" || orderStatus === "CANCELLED") {
           booking = await prisma.booking.update({
             where: { id: booking.id },
@@ -168,10 +192,16 @@ const updateBookingStatus = async (id, status) => {
   });
   if (!existing) return null;
 
-  return await prisma.booking.update({
+  const updated = await prisma.booking.update({
     where: { id: existing.id },
     data: { status },
   });
+
+  if (status === "CONFIRMED" || status === "COMPLETED") {
+    await promoteCustomerLeadsToLoyal(existing.customerPhone);
+  }
+
+  return updated;
 };
 
 const updateBooking = async (id, data) => {
@@ -189,7 +219,16 @@ const updateBooking = async (id, data) => {
   if (data.paymentStatus !== undefined) updateData.paymentStatus = data.paymentStatus;
   if (data.customerName !== undefined) updateData.customerName = data.customerName;
   if (data.customerPhone !== undefined) updateData.customerPhone = data.customerPhone;
-  if (data.customerEmail !== undefined) updateData.customerEmail = data.customerEmail;
+  if (data.customerEmail !== undefined) {
+    let cleanEmail = null;
+    if (data.customerEmail && typeof data.customerEmail === "string") {
+      const trimmed = data.customerEmail.trim().toLowerCase();
+      if (trimmed && trimmed !== "null" && trimmed !== "undefined") {
+        cleanEmail = trimmed;
+      }
+    }
+    updateData.customerEmail = cleanEmail;
+  }
   if (data.vehicleName !== undefined) updateData.vehicleName = data.vehicleName;
   if (data.vehicleModels !== undefined) updateData.vehicleModels = data.vehicleModels;
   if (data.vehicleSeats !== undefined) updateData.vehicleSeats = Number(data.vehicleSeats);
@@ -232,10 +271,20 @@ const updateBooking = async (id, data) => {
     updateData.balancePayable = balance;
   }
 
-  return await prisma.booking.update({
+  const updated = await prisma.booking.update({
     where: { id: existing.id },
     data: updateData,
   });
+
+  if (
+    updateData.status === "CONFIRMED" ||
+    updateData.status === "COMPLETED" ||
+    updateData.paymentStatus === "PAID"
+  ) {
+    await promoteCustomerLeadsToLoyal(updated.customerPhone || existing.customerPhone);
+  }
+
+  return updated;
 };
 
 const deleteBooking = async (id) => {
