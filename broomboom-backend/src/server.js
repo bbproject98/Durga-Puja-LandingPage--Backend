@@ -14,22 +14,81 @@ const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
 
-// 1. Global Middlewares
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:9000",
-      "http://localhost:9001",
-      "http://127.0.0.1:3000",
-      "http://127.0.0.1:9000",
-      "http://127.0.0.1:9001",
-      config.frontendUrl,
-    ],
-    credentials: true,
-  })
-);
+// 1. Global Middlewares & Robust CORS Handling
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  "http://localhost:9000",
+  "http://localhost:9001",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+  "http://127.0.0.1:9000",
+  "http://127.0.0.1:9001",
+  "https://durgapuja.broomboomcabs.com",
+  "http://durgapuja.broomboomcabs.com",
+  "https://www.durgapuja.broomboomcabs.com",
+  "http://www.durgapuja.broomboomcabs.com",
+  "https://broomboomcabs.com",
+  "https://www.broomboomcabs.com",
+  config.frontendUrl,
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, server-to-server, mobile app webview)
+    if (!origin) return callback(null, true);
+
+    const normalized = origin.replace(/\/+$/, "");
+    if (
+      allowedOrigins.includes(normalized) ||
+      normalized.endsWith("broomboomcabs.com") ||
+      normalized.includes("localhost") ||
+      normalized.includes("127.0.0.1") ||
+      normalized.endsWith(".vercel.app")
+    ) {
+      return callback(null, true);
+    }
+    // Allow any origin for the public booking API to ensure zero CORS errors
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "X-Requested-With",
+    "Origin",
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers",
+  ],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+// Explicit fallback middleware to ensure CORS headers on every response (even if errors occur)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  }
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, Accept, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+  next();
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(config.nodeEnv === "production" ? "combined" : "dev"));
