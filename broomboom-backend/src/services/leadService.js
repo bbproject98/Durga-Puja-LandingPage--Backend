@@ -78,7 +78,7 @@ const createLead = async (data) => {
       ? data.status
       : calculatedStatus;
 
-  return await prisma.lead.create({
+  const lead = await prisma.lead.create({
     data: {
       name: (name || "Guest Traveler").trim(),
       phone: rawPhone,
@@ -88,6 +88,8 @@ const createLead = async (data) => {
       status: finalStatus,
     },
   });
+
+  return lead;
 };
 
 const getAllLeads = async () => {
