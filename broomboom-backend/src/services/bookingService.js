@@ -3,9 +3,22 @@ const prisma = require("../config/db");
 const paymentService = require("./paymentService");
 const { promoteCustomerLeadsToLoyal } = require("./leadService");
 
+// ---- Helpers ----
 const generateBookingId = () => {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
   return `BBC-PUJA-${randomNum}`;
+};
+
+// Converts "", null, undefined, or whitespace into null. Trims and lowercases valid emails.
+const normalizeEmail = (email) => {
+  const trimmed = (email ?? "").toString().trim().toLowerCase();
+  return trimmed ? trimmed : null;
+};
+
+// Converts "", null, undefined, or whitespace into null for optional text fields.
+const normalizeOptionalText = (value) => {
+  const trimmed = (value ?? "").toString().trim();
+  return trimmed ? trimmed : null;
 };
 
 const createBooking = async (data) => {
@@ -27,7 +40,8 @@ const createBooking = async (data) => {
   } = data;
 
   const vehicleSeats = parseInt(
-    data.vehicleSeats || data.venicleSeats || data.venicieSeats || 4
+    data.vehicleSeats || data.venicleSeats || data.venicieSeats || 4,
+    10
   );
 
   const bookingId = data.bookingId || generateBookingId();
@@ -75,8 +89,8 @@ const createBooking = async (data) => {
         returnDate: returnDate || "Oct 16 (Same Night)",
         returnTime: returnTime || "11:30 PM",
         pickupAddress: (pickupAddress || "").trim(),
-        pickupPincode: pickupPincode ? pickupPincode.trim() : null,
-        pickupState: pickupState ? pickupState.trim() : null,
+        pickupPincode: normalizeOptionalText(pickupPincode),
+        pickupState: normalizeOptionalText(pickupState),
         fare,
         advanceAmount,
         gstAmount,
@@ -238,8 +252,15 @@ const updateBooking = async (id, data) => {
   if (data.returnDate !== undefined) updateData.returnDate = data.returnDate;
   if (data.returnTime !== undefined) updateData.returnTime = data.returnTime;
   if (data.pickupAddress !== undefined) updateData.pickupAddress = data.pickupAddress;
-  if (data.pickupPincode !== undefined) updateData.pickupPincode = data.pickupPincode;
-  if (data.pickupState !== undefined) updateData.pickupState = data.pickupState;
+  
+  // ✅ CHANGED: Normalized optional text fields
+  if (data.pickupPincode !== undefined) {
+    updateData.pickupPincode = normalizeOptionalText(data.pickupPincode);
+  }
+  if (data.pickupState !== undefined) {
+    updateData.pickupState = normalizeOptionalText(data.pickupState);
+  }
+  
   if (data.cashfreeOrderId !== undefined) updateData.cashfreeOrderId = data.cashfreeOrderId;
 
   // Handle all financial breakdown fields cleanly
