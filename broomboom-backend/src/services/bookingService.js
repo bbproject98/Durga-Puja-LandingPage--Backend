@@ -47,7 +47,7 @@ const createBooking = async (data) => {
   const bookingId = data.bookingId || generateBookingId();
 
   const fare = Number(totalTariff || data.fare) || 0;
-  const advanceAmount = Math.round(fare * 0.25);
+  const advanceAmount = Math.round(2051, fare);
   const gstAmount = Math.round(advanceAmount * 0.05);
   const withGst = advanceAmount + gstAmount;
   const gatewayCharge = Math.ceil(withGst * 0.03);
