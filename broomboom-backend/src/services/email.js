@@ -1,7 +1,7 @@
 const axios = require("axios");
 const React = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
-
+require("../config/env");
 /* ============================================================
  * BroomBoom Cabs — Lead Confirmation Email (Brevo + React)
  * Durga Puja 2026 Festive Edition 🪔  |  Image Ticket UI
