@@ -20,8 +20,8 @@ const CFG = {
   logoUrl: process.env.LOGO_URL || "https://durgapuja.broomboomcabs.com/images/Broomboom-logo.png",
   pujaImage: process.env.PUJA_IMAGE_URL || "https://durgapuja.broomboomcabs.com/images/durga-puja-2026-broomboom-cabs.jpg",
   
-  // ✅ COUPON IMAGE REPLACED WITH NEW LINK 👇
-  couponImage: process.env.COUPON_IMAGE_URL || "https://i.ibb.co/Kx9RYnJC/image.png",
+  // ✅ NEW COUPON IMAGE
+  couponImage: process.env.COUPON_IMAGE_URL || "https://i.postimg.cc/CM4yHCgM/image.png",
   
   offerAmount: "₹500",
   offerExpiryDays: "2",
@@ -56,13 +56,13 @@ const buildOfferUrl = (context) => {
 };
 
 /* ============================================================
- * Styles (UPDATED: Width reduced to 480, Gaps reduced, Button width reduced)
+ * Styles (Coupon image size reduced)
  * ============================================================ */
 
 const S = {
   wrapper: {
-    maxWidth: 480, // 600 se 480 kiya
-    margin: "15px auto", // 30px se 15px kiya
+    maxWidth: 480,
+    margin: "15px auto",
     background: "#FFFFFF",
     borderRadius: 20,
     overflow: "hidden",
@@ -76,12 +76,12 @@ const S = {
 
   strip: {
     background: "linear-gradient(90deg, #7C2D12 0%, #B91C1C 30%, #DC2626 50%, #B91C1C 70%, #7C2D12 100%)",
-    padding: "10px 8px", // Padding kam ki
+    padding: "10px 8px",
     textAlign: "center",
     borderBottom: "2px solid #FBBF24",
   },
   stripText: {
-    fontSize: 11, // 12 se 11
+    fontSize: 11,
     fontWeight: 900,
     letterSpacing: 3,
     textTransform: "uppercase",
@@ -94,17 +94,16 @@ const S = {
   heroWrap: { display: "block", textDecoration: "none", background: "#7C2D12", position: "relative" },
   hero: { display: "block", width: "100%", maxWidth: 480, height: "auto", border: 0 },
 
-  // 👇 GAP REMOVED HERE (Bottom padding changed from 16px to 0)
-  body: { padding: "20px 16px 0", color: "#3F3F46", lineHeight: 1.5 }, 
+  body: { padding: "12px 14px 0", color: "#3F3F46", lineHeight: 1.5 },
 
-  h2: { fontSize: 20, color: "#7C2D12", margin: "0 0 4px", fontWeight: 800, letterSpacing: 0.5 }, // Font aur margin kam
+  h2: { fontSize: 20, color: "#7C2D12", margin: "0 0 4px", fontWeight: 800, letterSpacing: 0.5 },
   festive: { fontSize: 16, fontWeight: 900, color: "#DC2626", margin: "0 0 2px", letterSpacing: 0.8 },
-  festiveSub: { fontSize: 13, color: "#B45309", margin: "0 0 10px", fontWeight: 600, fontStyle: "italic" },
-  muted: { fontSize: 14, color: "#52525B", margin: "0 0 10px" },
+  festiveSub: { fontSize: 13, color: "#B45309", margin: "0 0 6px", fontWeight: 600, fontStyle: "italic" },
+  muted: { fontSize: 14, color: "#52525B", margin: "0 0 6px" },
 
   enquiryBox: {
-    margin: "0 0 16px", // Margin kam
-    padding: "12px 14px", // Padding kam
+    margin: "0 0 6px",
+    padding: "10px 12px",
     background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
     borderLeft: "5px solid #DC2626",
     borderRadius: 10,
@@ -112,77 +111,79 @@ const S = {
   label: { fontSize: 9, letterSpacing: 2, textTransform: "uppercase", fontWeight: 900, color: "#92400E", margin: "0 0 4px" },
   enquiry: { fontSize: 13, color: "#4B2E05", fontWeight: 600, margin: 0, lineHeight: 1.5 },
 
-  /* ---------- COUPON IMAGE STYLE ---------- */
+  /* ---------- COUPON IMAGE STYLE (SIZE REDUCED) ---------- */
   couponImgWrapper: {
     display: "block",
     textDecoration: "none",
-    margin: "0 0 16px", // Margin kam
+    margin: "0 0 6px",
     textAlign: "center",
+    maxWidth: 340,
+    marginLeft: "auto",
+    marginRight: "auto",
   },
   couponImg: {
     display: "block",
     width: "100%",
-    maxWidth: 480, // Width kam
+    maxWidth: 340,
     height: "auto",
     border: 0,
     borderRadius: 10,
   },
 
-  /* Avail Now Button (UPDATED: Width decreased, centered) */
+  /* Avail Now Button */
   availBtn: {
     display: "block",
     textAlign: "center",
     textDecoration: "none",
     backgroundColor: "#5E35B1",
     color: "#FFFFFF",
-    fontSize: 14, 
+    fontSize: 12,           // Reduced from 14 for a smaller look
     fontWeight: 900,
-    padding: "12px 20px", // Padding kam
-    borderRadius: 10,
-    margin: "0 auto 20px", // Center mein lane ke liye auto lagaya
-    width: "80%",          // Width kam ki
-    maxWidth: "280px",     // Max width set ki
-    boxShadow: "0 8px 20px rgba(94, 53, 177, 0.4)",
+    padding: "8px 16px",    // Reduced padding (was 12px 20px)
+    borderRadius: 20,       // Pill shape looks more compact
+    margin: "0 auto 8px",
+    width: "fit-content",   // Shrinks the button to fit the text perfectly
+    minWidth: "120px",      // Ensures it doesn't get too tiny
+    maxWidth: "160px",      // Prevents it from stretching too wide
+    boxShadow: "0 4px 10px rgba(94, 53, 177, 0.4)", // Lighter shadow
     textTransform: "uppercase",
-    letterSpacing: "1.5px",
+    letterSpacing: "1px",   // Reduced from 1.5px to save horizontal space
     border: "1px solid #7E57C2",
   },
-
-  sectionWrap: { textAlign: "center", margin: "0 0 12px" },
-  sectionFlourish: { fontSize: 12, letterSpacing: 8, color: "#F59E0B", fontWeight: 900, lineHeight: 1, margin: "0 0 4px" },
+  sectionWrap: { textAlign: "center", margin: "0 0 4px" },
+  sectionFlourish: { fontSize: 12, letterSpacing: 8, color: "#F59E0B", fontWeight: 900, lineHeight: 1, margin: "0 0 2px" },
   sectionHeading: { fontSize: 14, fontWeight: 900, color: "#7C2D12", margin: 0, letterSpacing: 1.5, textTransform: "uppercase" },
 
-  table: { width: "100%", margin: "0 0 16px" },
-  cell: { padding: 4, width: "50%", verticalAlign: "top" }, // Padding kam
-  gBase: { borderRadius: 12, padding: "12px 8px", textAlign: "center", border: "1px solid #FFFFFF", boxShadow: "0 6px 15px rgba(0, 0, 0, 0.06)" },
+  table: { width: "100%", margin: "0 0 4px" },
+  cell: { padding: 2, width: "50%", verticalAlign: "top" },
+  
+  /* Guarantee Cards - Height Reduced */
+  gBase: { borderRadius: 8, padding: "6px 4px", textAlign: "center", border: "1px solid #FFFFFF", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.06)" },
   gYellow: { background: "linear-gradient(135deg, #FFFBEB 0%, #FDE68A 100%)" },
   gPink: { background: "linear-gradient(135deg, #FDF2F8 0%, #F9A8D4 100%)" },
   gGreen: { background: "linear-gradient(135deg, #ECFDF5 0%, #86EFAC 100%)" },
   gBlue: { background: "linear-gradient(135deg, #EFF6FF 0%, #93C5FD 100%)" },
-  gEmoji: { fontSize: 22, margin: "0 0 6px", lineHeight: 1, display: "block" }, // Emoji size kam
-  gTextBase: { fontSize: 11, fontWeight: 900, margin: 0, lineHeight: 1.4, letterSpacing: 0.5 },
+  gEmoji: { fontSize: 18, margin: "0 0 2px", lineHeight: 1, display: "block" },
+  gTextBase: { fontSize: 10, fontWeight: 900, margin: 0, lineHeight: 1.2, letterSpacing: 0.5 },
   gTextYellow: { color: "#854D0E" },
   gTextPink: { color: "#9D174D" },
   gTextGreen: { color: "#166534" },
   gTextBlue: { color: "#1E3A8A" },
 
-  btnCall: { display: "block", textAlign: "center", textDecoration: "none", background: "linear-gradient(135deg, #10B981 0%, #059669 100%)", color: "#FFFFFF", fontWeight: 900, fontSize: 13, padding: "12px 8px", borderRadius: 10, letterSpacing: 1, boxShadow: "0 6px 15px rgba(5, 150, 105, 0.35)" },
-  btnWeb: { display: "block", textAlign: "center", textDecoration: "none", background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)", color: "#FFFFFF", fontWeight: 900, fontSize: 13, padding: "12px 8px", borderRadius: 10, letterSpacing: 1, boxShadow: "0 6px 15px rgba(29, 78, 216, 0.35)" },
+  btnCall: { display: "block", textAlign: "center", textDecoration: "none", background: "linear-gradient(135deg, #10B981 0%, #059669 100%)", color: "#FFFFFF", fontWeight: 900, fontSize: 13, padding: "10px 8px", borderRadius: 10, letterSpacing: 1, boxShadow: "0 6px 15px rgba(5, 150, 105, 0.35)" },
+  btnWeb: { display: "block", textAlign: "center", textDecoration: "none", background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)", color: "#FFFFFF", fontWeight: 900, fontSize: 13, padding: "10px 8px", borderRadius: 10, letterSpacing: 1, boxShadow: "0 6px 15px rgba(29, 78, 216, 0.35)" },
 
-  wa: { textAlign: "center", margin: "4px 0 12px" },
-  waLink: { color: "#059669", fontWeight: 900, fontSize: 13, textDecoration: "none", letterSpacing: 0.5, display: "inline-block", padding: "8px 16px", background: "#ECFDF5", borderRadius: 30, border: "1px solid #A7F3D0" },
-  waIcon: { display: "inline-block", verticalAlign: "middle", marginRight: 6, border: 0 },
+  /* WhatsApp & Book Buttons - Side by Side */
+  waLink: { color: "#059669", fontWeight: 900, fontSize: 11, textDecoration: "none", letterSpacing: 0.5, display: "block", textAlign: "center", padding: "8px 6px", background: "#ECFDF5", borderRadius: 20, border: "1px solid #A7F3D0" },
+  waIcon: { display: "inline-block", verticalAlign: "middle", marginRight: 4, border: 0 },
+  bookBtn: { display: "block", textAlign: "center", textDecoration: "none", background: "linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)", color: "#7C2D12", fontWeight: 900, fontSize: 11, padding: "8px 6px", borderRadius: 20, letterSpacing: 0.5, border: "1px solid #B45309", boxShadow: "0 4px 10px rgba(180, 83, 9, 0.3)" },
 
-  bookWrap: { textAlign: "center", margin: "0 0 6px" },
-  bookBtn: { display: "inline-block", textDecoration: "none", background: "linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)", color: "#7C2D12", fontWeight: 900, fontSize: 12, padding: "10px 20px", borderRadius: 8, letterSpacing: 1, border: "1px solid #B45309", boxShadow: "0 6px 15px rgba(180, 83, 9, 0.3)" },
+  closing: { fontSize: 13, color: "#52525B", margin: "6px 0 0", lineHeight: 1.6, textAlign: "center" },
 
-  closing: { fontSize: 13, color: "#52525B", margin: "16px 0 0", lineHeight: 1.6, textAlign: "center" },
-
-  // 👇 GAP REMOVED HERE (Top padding changed from 16px to 0)
-  footer: { background: "linear-gradient(135deg, #FFF7E6 0%, #FCE7F3 60%, #FEF3C7 100%)", borderTop: "4px double #FBBF24", padding: "0 12px 16px", textAlign: "center" },
+  footer: { background: "linear-gradient(135deg, #FFF7E6 0%, #FCE7F3 60%, #FEF3C7 100%)", borderTop: "4px double #FBBF24", padding: "0 12px 12px", textAlign: "center" },
   footerText: { fontSize: 10, color: "#92400E", margin: 0, lineHeight: 1.6 },
   footerLogo: { display: "inline-block", verticalAlign: "middle", marginRight: 6, borderRadius: 4, border: 0 },
-  footerMotif: { fontSize: 12, letterSpacing: 6, color: "#B91C1C", fontWeight: 900, margin: "0 0 6px", lineHeight: 1 },
+  footerMotif: { fontSize: 12, letterSpacing: 6, color: "#B91C1C", fontWeight: 900, margin: "0 0 4px", lineHeight: 1 },
 };
 
 /* ============================================================
@@ -221,11 +222,9 @@ const EMAIL_CSS = `
 .bb-hero img { transition: transform .8s cubic-bezier(.2,.8,.2,1), filter .8s ease; }
 .bb-hero:hover img { transform: scale(1.05); filter: brightness(1.1); }
 
-/* Coupon Image Hover */
 .bb-coupon-img { transition: transform .4s ease, filter .4s ease; }
 .bb-coupon-img:hover { transform: scale(1.03); filter: brightness(1.05); }
 
-/* Avail Now button pulse and hover */
 @keyframes bbPulse {
   0%,100% { box-shadow: 0 10px 25px rgba(94, 53, 177, 0.4); }
   50%     { box-shadow: 0 15px 35px rgba(94, 53, 177, 0.7); }
@@ -320,7 +319,7 @@ function LeadEmail({ customerName, enquiryText, offerUrl, whatsappLink, currentY
       R("span", { className: "bb-strip-text", style: S.stripText }, "🪔  Durga Puja 2026 Special  🪔")
     ),
 
-    /* Hero image (Width reduced to 480) */
+    /* Hero image */
     R(
       "a",
       { href: offerUrl, target: "_blank", className: "bb-hero", style: S.heroWrap },
@@ -350,20 +349,20 @@ function LeadEmail({ customerName, enquiryText, offerUrl, whatsappLink, currentY
         R("div", { className: "bb-enquiry-text", style: S.enquiry }, enquiryText)
       ),
 
-      /* ---------- COUPON IMAGE (Width reduced to 480) ---------- */
+      /* Coupon Image (SIZE REDUCED) */
       R(
         "a",
         { href: offerUrl, target: "_blank", className: "bb-coupon-img-wrapper", style: S.couponImgWrapper },
         R("img", {
-          src: CFG.couponImage, // Aapki nayi image ka direct link
+          src: CFG.couponImage,
           alt: `${CFG.offerAmount} OFF Coupon`,
-          width: 480,
+          width: 340,
           className: "bb-coupon-img",
           style: S.couponImg,
         })
       ),
 
-      /* ---------- AVAIL NOW BUTTON (Centered, Width Reduced) ---------- */
+      /* Avail Now Button */
       R(
         "a",
         { href: offerUrl, target: "_blank", className: "bb-avail", style: S.availBtn },
@@ -396,7 +395,7 @@ function LeadEmail({ customerName, enquiryText, offerUrl, whatsappLink, currentY
       /* Call + Website */
       R(
         "table",
-        { role: "presentation", width: "100%", cellPadding: 0, cellSpacing: 0, border: 0, style: { margin: "0 0 12px" } },
+        { role: "presentation", width: "100%", cellPadding: 0, cellSpacing: 0, border: 0, style: { margin: "0 0 4px" } },
         R(
           "tbody",
           null,
@@ -409,23 +408,33 @@ function LeadEmail({ customerName, enquiryText, offerUrl, whatsappLink, currentY
         )
       ),
 
-      /* WhatsApp (Icon size reduced) */
+      /* WhatsApp + Reserve Cabs (Side by Side) */
       R(
-        "div",
-        { style: S.wa },
+        "table",
+        { role: "presentation", width: "100%", cellPadding: 0, cellSpacing: 0, border: 0, style: { margin: "0 0 6px" } },
         R(
-          "a",
-          { href: whatsappLink, target: "_blank", className: "bb-wa-link", style: S.waLink },
-          R("img", { src: CFG.whatsappIcon, alt: "WhatsApp", width: 16, height: 16, style: S.waIcon }),
-          R("span", { style: { verticalAlign: "middle" } }, "Chat with us on WhatsApp")
+          "tbody",
+          null,
+          R(
+            "tr",
+            null,
+            R(
+              "td",
+              { width: "50%", style: { paddingRight: 4, verticalAlign: "middle" } },
+              R(
+                "a",
+                { href: whatsappLink, target: "_blank", className: "bb-wa-link", style: S.waLink },
+                R("img", { src: CFG.whatsappIcon, alt: "WhatsApp", width: 14, height: 14, style: S.waIcon }),
+                R("span", { style: { verticalAlign: "middle" } }, "WhatsApp")
+              )
+            ),
+            R(
+              "td",
+              { width: "50%", style: { paddingLeft: 4, verticalAlign: "middle" } },
+              R("a", { href: CFG.websiteUrl, target: "_blank", className: "bb-book", style: S.bookBtn }, "🚖 Reserve Cabs")
+            )
+          )
         )
-      ),
-
-      /* Book Puja Ride */
-      R(
-        "div",
-        { style: S.bookWrap },
-        R("a", { href: CFG.websiteUrl, target: "_blank", className: "bb-book", style: S.bookBtn }, "🚖 Reserve Durga Puja Cabs")
       ),
 
       /* Closing */
@@ -439,7 +448,7 @@ function LeadEmail({ customerName, enquiryText, offerUrl, whatsappLink, currentY
       )
     ),
 
-    /* Footer (Logo size reduced) */
+    /* Footer */
     R(
       "div",
       { style: S.footer },
