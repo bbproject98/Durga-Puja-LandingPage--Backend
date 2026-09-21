@@ -1,4 +1,5 @@
 const prisma = require("../config/db");
+const { sendLeadEmail } = require("./email");
 
 const promoteCustomerLeadsToLoyal = async (phone) => {
   const cleanPhone = String(phone || "").replace(/\D/g, "").slice(-10);
@@ -78,18 +79,28 @@ const createLead = async (data) => {
       ? data.status
       : calculatedStatus;
 
-  const lead = await prisma.lead.create({
-    data: {
-      name: (name || "Guest Traveler").trim(),
-      phone: rawPhone,
-      email: cleanEmail,
-      context: context || "General Inquiry",
-      action: action || "book",
-      status: finalStatus,
-    },
-  });
+ const lead = await prisma.lead.create({
+  data: {
+    name: (name || "Guest Traveler").trim(),
+    phone: rawPhone,
+    email: cleanEmail,
+    context: context || "General Inquiry",
+    action: action || "book",
+    status: finalStatus,
+  },
+});
 
-  return lead;
+// Lead is already saved in DB.
+// Now send email to the customer.
+if (cleanEmail) {
+  await sendLeadEmail({
+    name: name || "Guest Traveler",
+    email: cleanEmail,
+    context: lead.context,
+  });
+}
+
+return lead;
 };
 
 const getAllLeads = async () => {
