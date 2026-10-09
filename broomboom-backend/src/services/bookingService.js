@@ -47,7 +47,29 @@ const createBooking = async (data) => {
   const bookingId = data.bookingId || generateBookingId();
 
   const fare = Number(totalTariff || data.fare) || 0;
-  const advanceAmount = Math.round(1051, fare);
+ const packageId = String(data.packageId || "").toLowerCase();
+const packageInfo = String(packageTitle || "").toLowerCase();
+const vehicleInfo = `${vehicleName || ""} ${vehicleModels || ""}`.toLowerCase();
+
+const isTraveller = vehicleInfo.includes("traveller") ||
+                    vehicleInfo.includes("urbania");
+
+const duration =
+  packageId.includes("5hr") || /\b5\s*hours?\b/.test(packageInfo) ? 5 :
+  packageId.includes("8hr") || /\b8\s*hours?\b/.test(packageInfo) ? 8 :
+  packageId.includes("10hr") || /\b10\s*hours?\b/.test(packageInfo) ? 10 :
+  packageId.includes("12hr") || /\b12\s*hours?\b/.test(packageInfo) ? 12 :
+  0;
+
+const advanceRates = isTraveller
+  ? { 5: 2551, 8: 3051, 10: 4051, 12: 5051 }
+  : { 5: 1051, 8: 1551, 10: 2051, 12: 2551 };
+
+if (!duration) {
+  throw new Error(`Cannot determine advance package duration: ${packageTitle || packageId || "missing package"}`);
+}
+
+const advanceAmount = advanceRates[duration];
   const gstAmount = Math.round(advanceAmount * 0.05);
   const withGst = advanceAmount + gstAmount;
   const gatewayCharge = Math.ceil(withGst * 0.03);
