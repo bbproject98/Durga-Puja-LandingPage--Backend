@@ -62,14 +62,17 @@ const duration =
   0;
 
 const advanceRates = isTraveller
-  ? { 5: 2551, 8: 3051, 10: 4051, 12: 5051 }
-  : { 5: 1051, 8: 1551, 10: 2051, 12: 2551 };
+  ? { 5: 3051, 8: 3551, 10: 4551, 12: 5551 }
+  : { 5: 1551, 8: 2051, 10: 2551, 12: 3051 };
 
-if (!duration) {
-  throw new Error(`Cannot determine advance package duration: ${packageTitle || packageId || "missing package"}`);
-}
+const defaultAdvance = duration
+  ? advanceRates[duration]
+  : Math.min(1551, fare);
 
-const advanceAmount = advanceRates[duration];
+const advanceAmount =
+  Number(data.advanceAmount) > 0
+    ? Number(data.advanceAmount)
+    : defaultAdvance;
   const gstAmount = Math.round(advanceAmount * 0.05);
   const withGst = advanceAmount + gstAmount;
   const gatewayCharge = Math.ceil(withGst * 0.03);
